@@ -1,14 +1,32 @@
+div.media-box {
+	box-shadow: 0 5px 15px rgba(0,0,0,.7);
+	background: #fcfcfc;
+	-webkit-font-smoothing: subpixel-antialiased;
+}
+div.media-box > div {
+	//position: relative;
+}
 div.category-list,
-div.attachment-list {
+div.attachment-list,
+div.attachment-detail {
 	width: 20%;
 	min-width: 20%;
 	min-height: 200px;
 	float: left;
+
+	padding: 10px 0;
+	background: #f3f3f3;
+	border-right-width: 1px;
+	border-right-style: solid;
+	border-right-color: #ccc;
+	-webkit-user-select: none;
+
 }
 div.attachment-detail {
 	width: 50%;
 	float: left;
 	min-height: 200px;
+	padding: 8px 20px;
 }
 div.attachment-detail img {
 	max-width: 100%;
@@ -22,6 +40,19 @@ ul.list {
 ul.list li > a {
 	box-sizing: border-box;
 	display: block;
-	width: 100%;
-	padding: 15px 10px;
+	position: relative;
+	padding: 8px 20px;
+	margin: 0;
+	line-height: 18px;
+	font-size: 14px;
+	color: #0073aa;
+	text-decoration: none;
+}
+ul.list li > a:hover {
+	color: #23282d;
+	font-weight: 700;
+}
+ul.list li > a.active {
+	color: #23282d;
+	font-weight: 700;
 }

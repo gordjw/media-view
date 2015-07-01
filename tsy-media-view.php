@@ -99,17 +99,19 @@ class Media_View
 
 		<h1>Media</h1>
 
-		<div class="category-list"></div>
-		<div class="attachment-list"></div>
-		<div class="attachment-detail"></div>
+		<div class="media-box">
+			<div class="category-list"></div>
+			<div class="attachment-list"></div>
+			<div class="attachment-detail"></div>
+		</div>
 
 		<script type="text/html" id="tmpl-category-list">
 			<ul class="list">
 				<# _.each( data.categories, function( c ) { #>
 					<li><a href="#" class="filter-link" data-category="{{ c.term_id }}">{{ c.name }}</a></li>
-					<# _.each( data.tags, function( t ) { #>
+					<!--<# _.each( data.tags, function( t ) { #>
 						<li><a href="#" class="filter-link" data-category="{{ c.term_id }}" data-tag="{{ t.term_id }}">{{ t.name }}</a></li>
-					<# }); #>
+					<# }); #>-->
 				<# }); #>
 			</ul>
 		</script>
@@ -138,8 +140,8 @@ class Media_View
 				var category = $(this).attr('data-category');
 				var tag = $(this).attr('data-tag');
 
-				$('a.filter-link').removeClass('selected');
-				$(this).addClass('selected');
+				$('a.filter-link').removeClass('active');
+				$(this).addClass('active');
 
 				var data = {
 					'action': 'get_attachments_filtered',
@@ -158,8 +160,8 @@ class Media_View
 			});
 
 			$('.attachment-list').on( 'click', 'a.detail-link', function(e) {
-				$('a.detail-link').removeClass('selected');
-				$(this).addClass('selected');
+				$('a.detail-link').removeClass('active');
+				$(this).addClass('active');
 
 				var id = $(this).attr('data-id');
 				var template = wp.template( 'attachment-detail' );
