@@ -354,12 +354,37 @@ class Media_View
 
 	public function multi_select_update() {
 		$attachment_ids = $_POST['attachments'];
-		$attachment_category_term_ids = $_POST['taxonomies']['attachment_category'];
-		$attachment_tag_term_ids = $_POST['taxonomies']['attachment_tag'];
+		$tags = array();
 
-		foreach( $attachment_ids as $id ) {
-			$return = wp_set_post_terms( $id, $attachment_category_term_ids, 'attachment_category', false );
-			//wp_set_post_terms( $id, $attachment_tag_term_ids, 'attachment_tag', false );
+		// Make sure that tags are passed as integers
+		// See Notes on https://codex.wordpress.org/Function_Reference/wp_set_post_terms
+		foreach( $_POST['taxonomies']['attachment_tag'] as $tag ) {
+			$tags[] = intval( $tag );
+		}
+
+		$things = array(
+			'attachment_category'	=> $_POST['taxonomies']['attachment_category'],
+			'attachment_tag'	=> $tags
+		);
+		$return = array();
+		
+		foreach( $things as $taxonomy => $terms ) {
+			foreach( $attachment_ids as $id ) {
+				$result = wp_set_post_terms( $id, (array) $terms, $taxonomy, false );
+
+				/*
+				(array) An array of the terms affected if successful,
+				(boolean) false if integer value of $post_id evaluates as false (if ( ! (int) $post_id )),
+				(WP_Error) The WordPress Error object on invalid taxonomy ('invalid_taxonomy').
+				(string) The first offending term if a term given in the $terms parameter is named incorrectly. (Invalid term ids are accepted and inserted).
+				*/
+				if( is_array( $result ) )
+					$return[] = array( 'status' => 'success', 'message' => 'Attachment updated successfully' );
+				if( is_wp_error( $result ) )
+					$return[] = array( 'status' => 'error', 'message' => $result->get_error_message() );
+				if( false === $result )
+					$return[] = array( 'status' => 'error', 'message' => 'Attachment not found' );
+			}
 		}
 
 		echo json_encode( $return );
