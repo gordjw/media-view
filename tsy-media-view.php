@@ -17,6 +17,7 @@ class Media_View
 		add_action( 'admin_enqueue_scripts', array( &$this, 'enqueue_scripts' ) );
 
 		add_action( 'wp_ajax_get_attachments_filtered', array( &$this, 'get_attachments_filtered' ) );
+		add_action( 'wp_ajax_get_categories', array( &$this, 'get_categories' ) );
 	}
 
 	public function enqueue_scripts() {
@@ -94,41 +95,28 @@ class Media_View
 
 
 	public function media_view_page() {
-		add_filter( 'posts_clauses', array( &$this, 'add_taxonomy_terms_to_attachments' ) );
-
-		echo '<h1>Media</h1>';
-		echo '<div class="attachment-sidebar">';
-
-		$args = array(
-			'hide_empty'	=> false,
-			'childless'	=> true
-		);
-		$categories = get_terms( 'attachment_category', $args );
-		$tags = get_terms( 'attachment_tag', $args );
-
-
-		echo '<ul class="list">';
-		foreach( $categories as $category ) {
-			printf( '<li><a href="#" class="filter-link" data-category="%s">%s</a>', $category->term_id, $category->name );
-
-			printf( '<ul>' );
-			foreach( $tags as $tag ) {
-				printf( '<li><a href="#" class="filter-link" data-category="%s" data-tag="%s">%s</a></li>', $category->term_id, $tag->term_id, $tag->name );
-			}
-			printf( '</ul>' );
-			printf( '</li>' );
-		}
-		printf( '</ul>' );
-
-		printf( '</div><div class="attachment-list"><h2>Attachments</h2>' );
-		printf( '<div class="attachment-container"></div>' );
-		printf( '</div>' );
-
 		?>
+
+		<h1>Media</h1>
+
+		<div class="category-list"></div>
+		<div class="attachment-list"></div>
+		<div class="attachment-detail"></div>
+
+		<script type="text/html" id="tmpl-category-list">
+			<ul class="list">
+				<# _.each( data.categories, function( c ) { #>
+					<li><a href="#" class="filter-link" data-category="{{ c.term_id }}">{{ c.name }}</a></li>
+					<# _.each( data.tags, function( t ) { #>
+						<li><a href="#" class="filter-link" data-category="{{ c.term_id }}" data-tag="{{ t.term_id }}">{{ t.name }}</a></li>
+					<# }); #>
+				<# }); #>
+			</ul>
+		</script>
 		<script type="text/html" id="tmpl-attachment-list">
-			<ul>
-				<# _.each( data, function( a ) { #>
-					<li><a href="#" class="detail-link" data-id="{{ a.ID }}">{{ a.post_title }}</a></li>
+			<ul class="list">
+				<# _.each( data, function( a, index ) { #>
+					<li><a href="#" class="detail-link" data-id="{{ index }}">{{ a.post_title }}</a></li>
 				<# }); #>
 			</ul>
 		</script>
@@ -139,9 +127,14 @@ class Media_View
 		<script>
 		jQuery( document ).ready( function($) {
 			var attachments;
-			console.log( wp );
 
-			$('.sidebar').on( 'click', 'a.filter-link', function(e) {
+			$.post( ajaxurl, {'action': 'get_categories'}, function(res) {
+				var categories = $.parseJSON( res );
+				var template = wp.template( 'category-list' );
+				$('.category-list').html( template( categories ) );
+			});
+
+			$('.category-list').on( 'click', 'a.filter-link', function(e) {
 				var category = $(this).attr('data-category');
 				var tag = $(this).attr('data-tag');
 
@@ -155,19 +148,22 @@ class Media_View
 				};
 
 				$.post( ajaxurl, data, function(res) {
-					console.log(res);
+					attachments = $.parseJSON( res );
+
 					var template = wp.template( 'attachment-list' );
-					$('.attachment-container').html( template( $.parseJSON( res ) ) );
+					$('.attachment-list').html( template( attachments ) );
 				});
 				
 				e.preventDefault();
 			});
 
-			$('.attachment-container').on( 'click', 'a.detail-link', function(e) {
+			$('.attachment-list').on( 'click', 'a.detail-link', function(e) {
 				$('a.detail-link').removeClass('selected');
 				$(this).addClass('selected');
 
-				console.log( $(this).attr('data-id') );
+				var id = $(this).attr('data-id');
+				var template = wp.template( 'attachment-detail' );
+				$('.attachment-detail').html( template( attachments[id] ) );
 
 				e.preventDefault();
 			});
@@ -206,6 +202,23 @@ class Media_View
 		);
 		$query = new \WP_Query( $args );
 		echo json_encode( $query->get_posts() );
+		wp_die();
+	}
+
+	public function get_categories() {
+		$args = array(
+			'hide_empty'	=> false,
+			'childless'	=> true
+		);
+		$categories = get_terms( 'attachment_category', $args );
+		$tags = get_terms( 'attachment_tag', $args );
+
+		echo json_encode( 
+			array( 
+				'categories' => $categories,
+				'tags' => $tags
+			)
+		);
 		wp_die();
 	}
 }

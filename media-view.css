@@ -1,5 +1,17 @@
-div.attachment-sidebar {
+div.category-list,
+div.attachment-list {
 	width: 20%;
+	min-width: 20%;
+	min-height: 200px;
+	float: left;
+}
+div.attachment-detail {
+	width: 50%;
+	float: left;
+	min-height: 200px;
+}
+div.attachment-detail img {
+	max-width: 100%;
 }
 
 ul.list {
@@ -8,6 +20,7 @@ ul.list {
 }
 
 ul.list li > a {
+	box-sizing: border-box;
 	display: block;
 	width: 100%;
 	padding: 15px 10px;
