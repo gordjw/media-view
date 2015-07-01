@@ -18,6 +18,7 @@ class Media_View
 
 		add_action( 'wp_ajax_get_attachments_filtered', array( &$this, 'get_attachments_filtered' ) );
 		add_action( 'wp_ajax_get_categories', array( &$this, 'get_categories' ) );
+		add_action( 'wp_ajax_multi_select_update', array( &$this, 'multi_select_update' ) );
 	}
 
 	public function enqueue_scripts() {
@@ -118,13 +119,18 @@ class Media_View
 			<# _.each( data.categories, function( c ) { #>
 				<li><a href="#" class="filter-link" data-category="{{ c.term_id }}">{{ c.name }}</a></li>
 				<!--<# _.each( data.tags, function( t ) { #>
-					<li><a href="#" class="filter-link" data-category="{{ c.term_id }}" data-tag="{{ t.term_id }}">{{ t.name }}</a></li>
+					<li>
+						<a href="#" class="filter-link" data-category="{{ c.term_id }}" data-tag="{{ t.term_id }}">{{ t.name }}</a>
+					</li>
 				<# }); #>-->
 			<# }); #>
 		</script>
 		<script type="text/html" id="tmpl-attachment-list">
 			<# _.each( data, function( a, index ) { #>
-				<li><a href="#" class="detail-link" data-id="{{ index }}">{{ a.post_title }}</a></li>
+				<li>
+					<input type="checkbox" data-id="{{ a.ID }}">
+					<a href="#" class="detail-link" data-id="{{ index }}">{{ a.post_title }}</a>
+				</li>
 			<# }); #>
 		</script>
 		<script type="text/html" id="tmpl-attachment-detail">
@@ -152,14 +158,78 @@ class Media_View
 				<input type="submit" class="button-primary" name="save" id="publish" value="Update">
 			</form>
 		</script>
+		<script type="text/html" id="tmpl-multi-select">
+			<form method="post">
+				<input type="hidden" name="action" value="multi_select_update">
+				<# _.each( data.selections, function( id ) { #>
+					<input type="hidden" name="attachment_id[]" value="{{ id }}">
+				<# }); #>
+
+				<h3>Update multiple selections</h3>
+
+				<div id="attachment_category-all" class="tabs-panel">
+					<ul id="attachment_categorychecklist" data-wp-lists="list:attachment_category" class="categorychecklist form-no-clear">
+						<# _.each( data.taxonomies.categories, function( c, index ) { #>
+							<li id="attachment_category-{{ c.term_id }}" class="popular-category">
+								<label class="selectit"><input value="{{ c.term_id }}" type="checkbox" name="tax_input[attachment_category][]" id="in-attachment_category-{{ c.term_id }}" > {{ c.name }}</label>
+							</li>
+						<# }); #>
+					</ul>
+				</div>
+
+				<div id="attachment_tag-all" class="tabs-panel">
+					<ul id="attachment_tagchecklist" data-wp-lists="list:attachment_category" class="categorychecklist form-no-clear">
+						<# _.each( data.taxonomies.tags, function( c, index ) { #>
+							<li id="attachment_tag-{{ c.term_id }}">
+								<label class="selectit"><input value="{{ c.term_id }}" type="checkbox" name="tax_input[attachment_tag][]" id="in-attachment_tag-{{ c.term_id }}" > {{ c.name }}</label>
+							</li>
+						<# }); #>
+					</ul>
+				</div>
+
+				<input type="submit" class="button-primary" name="save" id="publish" value="Update">
+			</form>
+		</script>
 		<script>
 		jQuery( document ).ready( function($) {
 			var attachments;
+			var single_view = '';
+			var categories;
 
 			$.post( ajaxurl, {'action': 'get_categories'}, function(res) {
-				var categories = $.parseJSON( res );
+				categories = $.parseJSON( res );
 				var template = wp.template( 'category-list' );
 				$('.category-list > .list').html( template( categories ) );
+			});
+
+			$('.media-box').on( 'submit', 'form', function(e) {
+				e.preventDefault();
+
+				var att = [];
+				 $('input[name="attachment_id[]"]').each( function() {
+					att.push( $(this).val() );
+				});
+
+				var tax = {'attachment_category': [], 'attachment_tag': []};
+				 $('#attachment_categorychecklist input[type="checkbox"]:checked').each( function() {
+					tax.attachment_category.push( $(this).val() );
+				});
+				 $('#attachment_tagchecklist input[type="checkbox"]:checked').each( function() {
+					tax.attachment_tag.push( $(this).val() );
+				});
+
+				var post_data = {
+					'action': $('input[name="action"]').val(),
+					'attachments': att,
+					'taxonomies': tax
+				};
+				$.post( ajaxurl, post_data, function(res) {
+					console.log(res);
+				});
+				
+				console.log( post_data );
+
+				console.log("Submitted");
 			});
 
 			$('.category-list').on( 'click', 'a.filter-link', function(e) {
@@ -189,13 +259,43 @@ class Media_View
 				$('a.detail-link').removeClass('active');
 				$(this).addClass('active');
 
+				// Clear multi-selects if someone clicks on a single item
+				$('.attachment-list input[type="checkbox"]:checked').each( function() { $(this).attr('checked', false); });
+				single_view = '';
+
 				var id = $(this).attr('data-id');
 				var template = wp.template( 'attachment-detail' );
 				$('.attachment-detail > .detail').html( template( attachments[id] ) );
 
-				console.log( attachments[id] );
-
 				e.preventDefault();
+			});
+			
+			$('.attachment-list').on( 'change', 'input[type="checkbox"]', function(e) {
+
+				// Preserve the current view for when all checkboxes are unchecked
+				if( single_view.length == 0 ) {
+					single_view = $('.attachment-detail > .detail').html();
+				}
+
+				var selections = [];
+				 $('.attachment-list input[type="checkbox"]:checked').each( function() {
+					selections.push( $(this).attr('data-id') );
+				});
+
+				// If nothing selected, show the preserved single view
+				// Otherwise, show the multi-select edit view
+				if( selections.length == 0 ) {
+					var html = single_view;
+					single_view = '';
+				} else {
+					var data = {
+						'selections': selections,
+						'taxonomies': categories
+					};
+					var template = wp.template( 'multi-select' );
+					var html = template( data );
+				}
+				$('.attachment-detail > .detail').html( html );
 			});
 		});
 		</script>
@@ -249,6 +349,20 @@ class Media_View
 				'tags' => $tags
 			)
 		);
+		wp_die();
+	}
+
+	public function multi_select_update() {
+		$attachment_ids = $_POST['attachments'];
+		$attachment_category_term_ids = $_POST['taxonomies']['attachment_category'];
+		$attachment_tag_term_ids = $_POST['taxonomies']['attachment_tag'];
+
+		foreach( $attachment_ids as $id ) {
+			$return = wp_set_post_terms( $id, $attachment_category_term_ids, 'attachment_category', false );
+			//wp_set_post_terms( $id, $attachment_tag_term_ids, 'attachment_tag', false );
+		}
+
+		echo json_encode( $return );
 		wp_die();
 	}
 }

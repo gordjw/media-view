@@ -43,7 +43,8 @@ ul.list {
 	
 }
 
-ul.list li > a {
+ul.list li,
+ul.list li > a  {
 	box-sizing: border-box;
 	display: block;
 	position: relative;
