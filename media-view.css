@@ -1,0 +1,14 @@
+div.attachment-sidebar {
+	width: 20%;
+}
+
+ul.list {
+	list-style-type: none;
+	
+}
+
+ul.list li > a {
+	display: block;
+	width: 100%;
+	padding: 15px 10px;
+}
