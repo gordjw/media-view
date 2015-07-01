@@ -100,31 +100,57 @@ class Media_View
 		<h1>Media</h1>
 
 		<div class="media-box">
-			<div class="category-list"></div>
-			<div class="attachment-list"></div>
-			<div class="attachment-detail"></div>
+			<div class="category-list">
+				<!--<div class="column-heading"><span>Category</span></div>-->
+				<ul class="list"></ul>
+			</div>
+			<div class="attachment-list">
+				<!--<div class="column-heading"><span>Attachments</span></div>-->
+				<ul class="list"></ul>
+			</div>
+			<div class="attachment-detail">
+				<!--<div class="column-heading"><span>Attachment</span></div>-->
+				<div class="detail"></div>
+			</div>
 		</div>
 
 		<script type="text/html" id="tmpl-category-list">
-			<ul class="list">
-				<# _.each( data.categories, function( c ) { #>
-					<li><a href="#" class="filter-link" data-category="{{ c.term_id }}">{{ c.name }}</a></li>
-					<!--<# _.each( data.tags, function( t ) { #>
-						<li><a href="#" class="filter-link" data-category="{{ c.term_id }}" data-tag="{{ t.term_id }}">{{ t.name }}</a></li>
-					<# }); #>-->
-				<# }); #>
-			</ul>
+			<# _.each( data.categories, function( c ) { #>
+				<li><a href="#" class="filter-link" data-category="{{ c.term_id }}">{{ c.name }}</a></li>
+				<!--<# _.each( data.tags, function( t ) { #>
+					<li><a href="#" class="filter-link" data-category="{{ c.term_id }}" data-tag="{{ t.term_id }}">{{ t.name }}</a></li>
+				<# }); #>-->
+			<# }); #>
 		</script>
 		<script type="text/html" id="tmpl-attachment-list">
-			<ul class="list">
-				<# _.each( data, function( a, index ) { #>
-					<li><a href="#" class="detail-link" data-id="{{ index }}">{{ a.post_title }}</a></li>
-				<# }); #>
-			</ul>
+			<# _.each( data, function( a, index ) { #>
+				<li><a href="#" class="detail-link" data-id="{{ index }}">{{ a.post_title }}</a></li>
+			<# }); #>
 		</script>
 		<script type="text/html" id="tmpl-attachment-detail">
-			<h3>{{ data.post_title }}</h3>
-			<img src="{{ data.guid }}">
+			<form method="post">
+				<h3>{{ data.post_title }}</h3>
+
+				<div class="curtime">
+					<span id="timestamp">Uploaded on: <b>{{ data.post_date }}</b></span>
+				</div>
+
+				<# if ( data.guid.substring(0,5) == "iaimage" ) { #>
+					<div class="dashicons-before dashicons-admin-post">
+						<span>{{ data.guid }}</span>
+					</div>
+				<# } #>
+
+				<img src="{{ data.guid }}">
+				<h4>Alt text</h4>
+				<p>{{ data.alt_text }}</p>
+				<h4>Caption</h4>
+				<p>{{ data.post_excerpt }}</p>
+				<h4>Description</h4>
+				<p>{{ data.post_content }}</p>
+
+				<input type="submit" class="button-primary" name="save" id="publish" value="Update">
+			</form>
 		</script>
 		<script>
 		jQuery( document ).ready( function($) {
@@ -133,7 +159,7 @@ class Media_View
 			$.post( ajaxurl, {'action': 'get_categories'}, function(res) {
 				var categories = $.parseJSON( res );
 				var template = wp.template( 'category-list' );
-				$('.category-list').html( template( categories ) );
+				$('.category-list > .list').html( template( categories ) );
 			});
 
 			$('.category-list').on( 'click', 'a.filter-link', function(e) {
@@ -153,7 +179,7 @@ class Media_View
 					attachments = $.parseJSON( res );
 
 					var template = wp.template( 'attachment-list' );
-					$('.attachment-list').html( template( attachments ) );
+					$('.attachment-list > .list').html( template( attachments ) );
 				});
 				
 				e.preventDefault();
@@ -165,7 +191,9 @@ class Media_View
 
 				var id = $(this).attr('data-id');
 				var template = wp.template( 'attachment-detail' );
-				$('.attachment-detail').html( template( attachments[id] ) );
+				$('.attachment-detail > .detail').html( template( attachments[id] ) );
+
+				console.log( attachments[id] );
 
 				e.preventDefault();
 			});
@@ -186,7 +214,7 @@ class Media_View
 				'terms'		=> sprintf( '%d', $category )
 			)
 		);
-			
+		
 		if( false === empty( $tag ) ) {
 			$tax_query['relation'] = 'AND';
 			$tax_query[] = array(

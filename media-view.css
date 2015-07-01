@@ -3,18 +3,17 @@ div.media-box {
 	background: #fcfcfc;
 	-webkit-font-smoothing: subpixel-antialiased;
 }
-div.media-box > div {
-	//position: relative;
-}
 div.category-list,
 div.attachment-list,
 div.attachment-detail {
 	width: 20%;
 	min-width: 20%;
-	min-height: 200px;
+	min-height: 80vh;
+	max-height: 80vh;
+	overflow-y: auto;
 	float: left;
 
-	padding: 10px 0;
+	padding: 0 0 10px 0;
 	background: #f3f3f3;
 	border-right-width: 1px;
 	border-right-style: solid;
@@ -25,7 +24,14 @@ div.attachment-detail {
 div.attachment-detail {
 	width: 50%;
 	float: left;
-	min-height: 200px;
+}
+div.category-list > div.column-heading,
+div.attachment-list > div.column-heading,
+div.attachment-detail > div.column-heading {
+	padding: 8px 20px;
+	background: #fff;
+}
+div.attachment-detail > div {
 	padding: 8px 20px;
 }
 div.attachment-detail img {
@@ -55,4 +61,8 @@ ul.list li > a:hover {
 ul.list li > a.active {
 	color: #23282d;
 	font-weight: 700;
+}
+
+.column-heading {
+	border-bottom: 1px solid #e1e1e1;
 }
