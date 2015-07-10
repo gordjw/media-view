@@ -10,6 +10,9 @@ namespace TSS;
 
 class Media_View
 {
+
+
+
 	function __construct() {
 		add_action( 'admin_menu', array( &$this, 'add_menu_pages' ) );
 		add_action( 'init', array( &$this, 'register_taxonomies' ) );
@@ -21,10 +24,14 @@ class Media_View
 		add_action( 'wp_ajax_multi_select_update', array( &$this, 'multi_select_update' ) );
 	}
 
+
+
 	public function enqueue_scripts() {
 		wp_enqueue_style( 'media-view', plugins_url( 'media-view.css', __FILE__ ) );
 		wp_enqueue_script( 'wp-util' );
 	}
+
+
 
 	public function register_taxonomies() {
 		// Use attachment_category and attachment_tag, because that's we've already got in quite a few sites, so let's re-use that
@@ -90,9 +97,11 @@ class Media_View
 	}
 
 
+
 	public function add_menu_pages() {
 		add_menu_page( 'Media View', 'Media View', 'edit_posts', 'media-view', array( &$this, 'media_view_page' ), 'dashicons-admin-media' );
 	}
+
 
 
 	public function media_view_page() {
@@ -141,7 +150,7 @@ class Media_View
 					<span id="timestamp">Uploaded on: <b>{{ data.post_date }}</b></span>
 				</div>
 
-				<# if ( data.guid.substring(0,5) == "iaimage" ) { #>
+				<# if ( data.guid.substring(0,5) == "image" ) { #>
 					<div class="dashicons-before dashicons-admin-post">
 						<span>{{ data.guid }}</span>
 					</div>
@@ -335,6 +344,8 @@ class Media_View
 		wp_die();
 	}
 
+
+
 	public function get_categories() {
 		$args = array(
 			'hide_empty'	=> false,
@@ -352,13 +363,15 @@ class Media_View
 		wp_die();
 	}
 
+
+
 	public function multi_select_update() {
 		$attachment_ids = $_POST['attachments'];
 		$tags = array();
 
 		// Make sure that tags are passed as integers
 		// See Notes on https://codex.wordpress.org/Function_Reference/wp_set_post_terms
-		foreach( $_POST['taxonomies']['attachment_tag'] as $tag ) {
+		foreach( (array) $_POST['taxonomies']['attachment_tag'] as $tag ) {
 			$tags[] = intval( $tag );
 		}
 
